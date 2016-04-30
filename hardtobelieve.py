@@ -1,12 +1,13 @@
 #-*- coding: utf-8 -*-
 import sys, telnetlib, time, socket, struct
 from subprocess import Popen, PIPE
-import Tkinter
+import Tkinter, select
 
 tmp = None
 class HarDToSock:
 	def __init__(self, *args, **kwargs):
 		self.magicValue = 1928
+		self.timeout = 3
 		if "DEBUG" in kwargs:
 			self.host = "localhost"
 			self.port = self.magicValue
@@ -14,23 +15,30 @@ class HarDToSock:
 			self.host = kwargs["host"]
 			self.port = kwargs["port"]
 		else:
-			print "[+] Failed in connecting"
+			print "[-] Failed in connecting"
 			sys.exit()
 		self.sock = socket.create_connection((self.host, self.port))
+		if "timeout" in kwargs:
+			self.timeout = kwargs["timeout"]
 
 	def recv(self, **kwargs):
-		if len(kwargs) == 0:
-			return self.sock.recv(4096)
-		elif "end" in kwargs:
-			s = kwargs["end"]
-			buf = ''
-			while not buf.endswith(s):
-				buf += self.sock.recv(1)
-			return buf
+		self.sock.setblocking(0)
+		ready = select.select([self.sock], [], [], self.timeout)
+		if ready[0]:
+			if len(kwargs) == 0:
+				return self.sock.recv(4096)
+			elif "end" in kwargs:
+				s = kwargs["end"]
+				buf = ''
+				while not buf.endswith(s):
+					buf += self.sock.recv(1)
+				return buf
+			else:
+				print "[-] Need a purpose to wait!"
+				sys.exit()
 		else:
-			print "[+] Need a purpose to wait!"
+			print "[+] Can't receive anything!"
 			sys.exit()
-
 	def send(self, payload):
 		self.sock.send(payload)
 
@@ -44,34 +52,49 @@ class HarDToSock:
 				sys.exit()
 			if ( tmp != None ) and ( input_get.split('\n')[-2] ):
 				tmp.sendln(input_get.split('\n')[-2])
-				self.output.insert(Tkinter.INSERT, tmp.recv())
-				self.output.see(Tkinter.END)
+				
+				tmp.sock.setblocking(0)
+				ready = select.select([tmp.sock], [], [], tmp.timeout)
+				if ready[0]:
+					self.output.insert(Tkinter.INSERT, tmp.recv())
+					self.output.see(Tkinter.END)
+				else:
+					print "[+] Can't receive anything!"
+					sys.exit()
+
+		def onResize(self, event):
+			self.width = event.width
+			self.height = event.height
+			self.config(width=self.width, height=self.height)
 
 		def __init__(self, parent, *args, **kwargs):
 			Tkinter.Frame.__init__(self, parent, *args, **kwargs)
 			self.parent = parent
+			self.bind("<Configure>", self.onResize)
 
 			self.label = Tkinter.Label(self, text="Nothing is impossible\nImpossible says its self \"I\'m possible\"")
 			self.interact = Tkinter.Frame(self)
-			self.input = Tkinter.Text(self.interact, width=37, height=10)
+
+			self.input = Tkinter.Text(self.interact, width=40, height=24, fg="green", bg="black")
 			self.input.bind("<Return>", lambda x: self.Enter_pressed())
 			self.input.focus_set()
-			self.output = Tkinter.Text(self.interact, width=37, height=10)
+			
+			self.output = Tkinter.Text(self.interact, width=60, height=24, fg="green", bg="black")
 
 			self.label.pack()
 			self.interact.pack()
-			self.input.grid(row=0, column=0)
-			self.output.grid(row=0, column=1)
-
+			self.input.grid(row=0, column=0, padx=4, pady=2)
+			self.output.grid(row=0, column=1, padx=2, pady=2)
+			
 	def hardtopwn(self):
 		global tmp
 		print "[+] Keep calm and try harder"
 		root = Tkinter.Tk()
-		root.geometry("600x200")
+		root.geometry("830x435")
 		root.resizable(width=False, height=False)
 		root.title("Terminal")
 		tmp = self
-		HarDToSock.Terminal(root).pack(side="top", fill="both", expand=True)
+		HarDToSock.Terminal(root).pack(fill="both", expand=True)
 		root.mainloop()
 
 
@@ -79,13 +102,13 @@ def p32(number):
 	return struct.pack('<I', number)
 
 def u32(s):
-	return struct.unpack('<I', s)[0]
+	return hex(struct.unpack('<I', s.decode("hex"))[0])[2:].decode("hex")
 
 def p64(number):
 	return struct.pack('<Q', number)
 
 def u64(s):
-	return struct.unpack('<Q', s)[0]
+	return hex(struct.unpack('<I', s.decode("hex"))[0])[2:].decode("hex")
 
 def log(s):
 	print "[+] ", s
