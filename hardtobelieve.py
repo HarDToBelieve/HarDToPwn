@@ -7,7 +7,7 @@ tmp = None
 class HarDToSock:
 	def __init__(self, *args, **kwargs):
 		self.magicValue = 1928
-		self.timeout = 3
+		self.timeout = 1
 		if "DEBUG" in kwargs:
 			self.host = "localhost"
 			self.port = self.magicValue
@@ -37,8 +37,8 @@ class HarDToSock:
 				print "[-] Need a purpose to wait!"
 				sys.exit()
 		else:
-			print "[+] Can't receive anything!"
-			sys.exit()
+			print "[+] No return message"
+			return ""
 	def send(self, payload):
 		self.sock.send(payload)
 
@@ -52,15 +52,15 @@ class HarDToSock:
 				sys.exit()
 			if ( tmp != None ) and ( input_get.split('\n')[-2] ):
 				tmp.sendln(input_get.split('\n')[-2])
-				
+				string = ""
 				tmp.sock.setblocking(0)
 				ready = select.select([tmp.sock], [], [], tmp.timeout)
 				if ready[0]:
-					self.output.insert(Tkinter.INSERT, tmp.recv())
-					self.output.see(Tkinter.END)
+					string = tmp.recv()
 				else:
-					print "[+] Can't receive anything!"
-					sys.exit()
+					print "[+] No return message"
+				self.output.insert(Tkinter.INSERT, string)
+				self.output.see(Tkinter.END)
 
 		def onResize(self, event):
 			self.width = event.width
@@ -76,6 +76,7 @@ class HarDToSock:
 			self.interact = Tkinter.Frame(self)
 
 			self.input = Tkinter.Text(self.interact, width=40, height=24, fg="green", bg="black")
+			self.input.config(insertbackground="green")
 			self.input.bind("<Return>", lambda x: self.Enter_pressed())
 			self.input.focus_set()
 			
@@ -88,6 +89,14 @@ class HarDToSock:
 			
 	def hardtopwn(self):
 		global tmp
+		print "[+] Recveiving the remain bytes..."
+		while True:
+			self.sock.setblocking(0)
+			ready = select.select([self.sock], [], [], self.timeout)
+			if ready[0]:
+				continue
+			else:
+				break
 		print "[+] Keep calm and try harder"
 		root = Tkinter.Tk()
 		root.geometry("830x435")
