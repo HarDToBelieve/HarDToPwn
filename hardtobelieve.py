@@ -59,12 +59,15 @@ class HarDToSock:
 					string = tmp.recv()
 				else:
 					print "[+] No return message"
+				if string[:-1] != '\n' and len(self.output.get("1.0", Tkinter.END)) > 1:
+					self.output.insert(Tkinter.INSERT, "\n")
 				self.output.insert(Tkinter.INSERT, string)
 				self.output.see(Tkinter.END)
 
 		def onResize(self, event):
 			self.width = event.width
 			self.height = event.height
+			#print self.width, ",", self.height
 			self.config(width=self.width, height=self.height)
 
 		def __init__(self, parent, *args, **kwargs):
@@ -75,12 +78,11 @@ class HarDToSock:
 			self.label = Tkinter.Label(self, text="Nothing is impossible\nImpossible says its self \"I\'m possible\"")
 			self.interact = Tkinter.Frame(self)
 
-			self.input = Tkinter.Text(self.interact, width=40, height=24, fg="green", bg="black")
-			self.input.config(insertbackground="green")
+			self.input = Tkinter.Text(self.interact, width=40, height=24, fg="green", bg="black", font = "Helvetica 13 bold")
 			self.input.bind("<Return>", lambda x: self.Enter_pressed())
 			self.input.focus_set()
 			
-			self.output = Tkinter.Text(self.interact, width=60, height=24, fg="green", bg="black")
+			self.output = Tkinter.Text(self.interact, width=60, height=24, fg="green", bg="black", font = "Helvetica 13 bold")
 
 			self.label.pack()
 			self.interact.pack()
@@ -94,12 +96,13 @@ class HarDToSock:
 			self.sock.setblocking(0)
 			ready = select.select([self.sock], [], [], self.timeout)
 			if ready[0]:
+				self.sock.recv(4096)
 				continue
 			else:
 				break
 		print "[+] Keep calm and try harder"
 		root = Tkinter.Tk()
-		root.geometry("830x435")
+		root.geometry("923x504")
 		root.resizable(width=False, height=False)
 		root.title("Terminal")
 		tmp = self
