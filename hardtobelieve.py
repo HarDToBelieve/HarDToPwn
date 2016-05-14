@@ -1,4 +1,3 @@
-#-*- coding: utf-8 -*-
 import sys, telnetlib, time, socket, struct
 from subprocess import Popen, PIPE
 import Tkinter, select
@@ -114,14 +113,16 @@ def p32(number):
 	return struct.pack('<I', number)
 
 def u32(s):
-	return hex(struct.unpack('<I', s.decode("hex"))[0])[2:].decode("hex")
+	return struct.unpack('<I', s)[0]
 
 def p64(number):
 	return struct.pack('<Q', number)
 
 def u64(s):
-	return hex(struct.unpack('<I', s.decode("hex"))[0])[2:].decode("hex")
-
+	tmp = s[:]
+	while len(tmp) < 8:
+		tmp += "\x00"
+	return struct.unpack('<Q', tmp)[0]
 def log(s):
 	print "[+]", s
 
