@@ -11,3 +11,6 @@ However, if there is an error about `unhandle thread`, replace the `telnetlib.py
 ## Development
 
 Still considering some additional features
+
+
+## => Project was dropped due to some unsolvable problems
